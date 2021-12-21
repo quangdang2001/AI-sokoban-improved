@@ -4,77 +4,58 @@ import support_function as spf
 import time
 from queue import PriorityQueue
 
-'''
-//========================//
-//          ASTAR         //
-//        ALGORITHM       //
-//     IMPLEMENTATION     //
-//========================//
-'''
+
 def AStart_Search(board, list_check_point):
     start_time = time.time()
-    ''' A* SEARCH SOLUTION '''
-    ''' IF START BOARD IS GOAL OR DON'T HAVE CHECK POINT '''
-    if spf.check_win(board,list_check_point):
+
+    ''' nếu board ban đầu là goal thì trả về '''
+    if spf.check_win(board, list_check_point):
         print("Found win")
         return [board]
-    ''' INITIALIZE START STATE '''
-    start_state = spf.state(board, None, list_check_point)
+    ''' khởi tạo state ban đầu '''
+    start_state = spf.state(board, None, spf.check_checkpoint_init(board, list_check_point))
     list_state = [start_state]
-    ''' INITIALIZE PRIORITY QUEUE '''
+    ''' khởi tạo hàng đợi ưu tiên '''
     heuristic_queue = PriorityQueue()
     heuristic_queue.put(start_state)
-    ''' LOOP THROUGH PRIORITY QUEUE '''
+    ''' lặp qua hàng đợi '''
     while not heuristic_queue.empty():
-        '''GET NOW STATE TO SEARCH'''
+        '''lấy giá state có f cost nhỏ nhất trong hàng đợi'''
         now_state = heuristic_queue.get()
 
-        ''' GET THE PLAYER'S CURRENT POSITION'''
+        ''' lấy vị trí hiện tại của player'''
         cur_pos = spf.find_position_player(now_state.board)
-        ''' 
-        THIS WILL PRINT THE STEP-BY-STEP IMPLEMENTATION OF HOW THE ALGORITHM WORKS, 
-        UNCOMMENT TO USE IF NECCESSARY 
-        '''
-        '''
-        time.sleep(1)
-        clear = lambda: os.system('cls')
-        clear()
-        print_matrix(now_state.board)
-        print("State visited : {}".format(len(list_state)))
-        print("State in queue : {}".format(len(list_visit)))
-        '''
-        
-        ''' GET LIST POSITION THAT PLAYER CAN MOVE TO '''
-        list_can_move = spf.get_next_pos(now_state.board, cur_pos,now_state.check_points,list_check_point)
-        ''' MAKE NEW STATES FROM LIST CAN MOVE '''
+
+        ''' lấy danh sách vị trí mà player có thể di chuyển '''
+        list_can_move = spf.get_next_pos(now_state.board, cur_pos, now_state.check_points, list_check_point)
+        ''' tạo các state mới từ list can move '''
         for next_pos in list_can_move:
-            ''' MAKE NEW BOARD '''
-            new_board,new_checkpoint = spf.move(now_state.board, next_pos, cur_pos, deepcopy(now_state.check_points))
-            ''' IF THIS BOARD DON'T HAVE IN LIST BEFORE --> SKIP THE STATE '''
-            if spf.is_board_exist(new_board, list_state,new_checkpoint):
+            ''' tạo board và checkpoint mới '''
+            new_board, new_checkpoint = spf.move(now_state.board, next_pos, cur_pos, deepcopy(now_state.check_points))
+            ''' kiểm tra đã tồn tại chưa '''
+            if spf.is_board_exist(new_board, list_state, new_checkpoint):
                 continue
-            ''' IF ONE OR MORE BOXES ARE STUCK IN THE CORNER --> SKIP THE STATE '''
+            ''' kiểm tra có hộp nào trong nằm góc '''
             if spf.is_board_can_not_win(new_board, new_checkpoint):
                 continue
-            ''' IF ALL BOXES ARE STUCK --> SKIP THE STATE '''
+            ''' kiểm tra tất cả các hộp có bị kẹt '''
             if spf.is_all_boxes_stuck(new_board, new_checkpoint):
                 continue
 
-            ''' MAKE NEW STATE '''
+            ''' tạo state mới '''
             new_state = spf.state(new_board, now_state, new_checkpoint)
-            ''' CHECK WHETHER THE NEW STATE IS GOAL OR NOT '''
+            ''' kiểm tra goal '''
             if spf.check_win(new_board, new_checkpoint):
                 print("Found win")
                 print("Cost: ", now_state.g + 1)
                 end_time = time.time()
                 print(len(list_state))
-                return (new_state.get_line(), len(list_state),round(end_time - start_time,3))
-            
-            ''' APPEND NEW STATE TO PRIORITY QUEUE AND TRAVERSED LIST '''
+                return new_state.get_line(), len(list_state), round(end_time - start_time, 3)
+
+            ''' thêm trạng thái vào list đã duyệt và hàng đợi '''
             list_state.append(new_state)
             heuristic_queue.put(new_state)
 
-            ''' COMPUTE THE TIMEOUT '''
             end_time = time.time()
             if end_time - start_time > spf.TIME_OUT:
                 return []

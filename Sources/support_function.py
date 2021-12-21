@@ -4,16 +4,6 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 TIME_OUT = 1800
-'''
-//========================//
-//        SUPPORTING      //
-//        FUNCTIONS       //
-//========================//
-'''
-'''
-DATA CONTAINER TO STORE THE STATE FOR EACH STEP
-'''
-
 
 class state:
     def __init__(self, board, state_parent, list_check_point):
@@ -24,7 +14,7 @@ class state:
         self.heuristic = 0
         self.check_points = deepcopy(list_check_point)
 
-    ''' RECURSIVE FUNCTION TO BACKTRACK TO THE FIRST FIRST IF THE CURRENT STATE IS GOAL '''
+    ''' hàm truy vết đường đi '''
 
     def get_line(self):
         '''use loop to find list board from start to this state'''
@@ -32,8 +22,9 @@ class state:
             return [self.board, self.check_points]
         return (self.state_parent).get_line() + [self.board, self.check_points]
 
-    ''' COMPUTE HEURISTIC FUNCTION USED FOR A* ALGORITHM '''
-    def is_similar_style(self,box,checkpoint_style):
+    ''' Hàm tính heuristic '''
+    # Kiểm tra có cùng loại
+    def is_similar_style(self, box, checkpoint_style):
         if box == '$' + str(checkpoint_style):
             return True
         return False
@@ -44,7 +35,7 @@ class state:
             temp = []
             for box in list_boxes:
                 for check_point in self.check_points:
-                    if self.is_similar_style(self.board[box[0]][box[1]],check_point[3]):
+                    if self.is_similar_style(self.board[box[0]][box[1]], check_point[3]):
                         temp.append(abs(box[0] - check_point[0]) + abs(box[1] - check_point[1]))
                     else:
                         temp.append(np.inf)
@@ -56,7 +47,7 @@ class state:
                 row_ind, cow_ind = linear_sum_assignment(cost)
                 self.heuristic = cost[row_ind, cow_ind].sum()
             except:
-                self.heuristic=np.inf
+                self.heuristic = np.inf
 
             if (self.state_parent != None):
                 self.g = self.state_parent.g + 1
@@ -77,10 +68,11 @@ class state:
             return False
 
 
-''' CHECK WHETHER THE BOARD IS GOAL OR NOT '''
+''' Kiểm tra board đã đạt goal chưa '''
+
 
 # Kiem tra xem vi tri cua hop co la checkpoint va co dung loai hay khong
-def is_postion_checkpoint(box, list_checkpoints,board):
+def is_postion_checkpoint(box, list_checkpoints, board):
     check = False
     for checkpoint in list_checkpoints:
         if box[0] == checkpoint[0] and box[1] == checkpoint[1] and board[box[0]][box[1]] == '$' + str(checkpoint[3]):
@@ -93,7 +85,7 @@ def is_postion_checkpoint(box, list_checkpoints,board):
 def check_win(board, list_check_point):
     result = find_boxes_position(board)
     for b in result:
-        if not is_postion_checkpoint(b, list_check_point,board):
+        if not is_postion_checkpoint(b, list_check_point, board):
             return False
     return True
 
@@ -106,7 +98,7 @@ def assign_matrix(board):
     return [[board[x][y] for y in range(len(board[0]))] for x in range(len(board))]
 
 
-''' FIND THE PLAYER'S CURRENT POSITION IN A BOARD '''
+''' Tìm vị trí player '''
 
 
 def find_position_player(board):
@@ -118,7 +110,7 @@ def find_position_player(board):
     return (-1, -1)  # error board
 
 
-''' COMPARE 2 BOARDS '''
+''' so sánh 2 BOARDS '''
 
 
 def compare_matrix(board_A, board_B, A_checkpoint, B_checkpoint):
@@ -140,7 +132,7 @@ def compare_matrix(board_A, board_B, A_checkpoint, B_checkpoint):
     return True
 
 
-''' CHECK WHETHER THE BOARD ALREADY EXISTED IN THE TRAVERSED LIST'''
+''' kiểm tra board đã tồn tại'''
 
 
 def is_board_exist(board, list_state, checkpoint):
@@ -151,41 +143,41 @@ def is_board_exist(board, list_state, checkpoint):
     return False
 
 
-''' CHECK WHETHER A SINGLE BOX IS ON A CHECKPOINT '''
+''' kiểm tra box đã nằm ở vị trí checkpoint '''
 
 
-def is_box_on_check_point(box, list_check_point):
+def is_box_on_check_point(box, list_check_point, board):
     for check_point in list_check_point:
-        if box[0] == check_point[0] and box[1] == check_point[1]:
+        if box[0] == check_point[0] and box[1] == check_point[1] and board[box[0]][box[1]] == '$' + str(check_point[3]):
             return True
     return False
 
 
-''' CHECK WHETHER A SIGNLE BOX IS STUCK IN THE CORNER '''
+''' kiểm tra box có nằm trong góc '''
 
 
 def check_in_corner(board, x, y, list_check_point):
     '''return true if board[x][y] in corner'''
     if board[x - 1][y - 1] == '#':
         if board[x - 1][y] == '#' and board[x][y - 1] == '#':
-            if not is_box_on_check_point((x, y), list_check_point):
+            if not is_box_on_check_point((x, y), list_check_point, board):
                 return True
     if board[x + 1][y - 1] == '#':
         if board[x + 1][y] == '#' and board[x][y - 1] == '#':
-            if not is_box_on_check_point((x, y), list_check_point):
+            if not is_box_on_check_point((x, y), list_check_point, board):
                 return True
     if board[x - 1][y + 1] == '#':
         if board[x - 1][y] == '#' and board[x][y + 1] == '#':
-            if not is_box_on_check_point((x, y), list_check_point):
+            if not is_box_on_check_point((x, y), list_check_point, board):
                 return True
     if board[x + 1][y + 1] == '#':
         if board[x + 1][y] == '#' and board[x][y + 1] == '#':
-            if not is_box_on_check_point((x, y), list_check_point):
+            if not is_box_on_check_point((x, y), list_check_point, board):
                 return True
     return False
 
 
-''' FIND ALL BOXES' POSITIONS '''
+''' tìm tất cả vị trí box '''
 
 
 def find_boxes_position(board):
@@ -197,7 +189,7 @@ def find_boxes_position(board):
     return result
 
 
-''' CHECK WHETHER A SINGLE BOX CAN BE MOVED IN AT LEAST 1 DIRECITON'''
+''' kiểm tra box ít nhất có thể di chuyển 1 hướng'''
 
 
 def is_box_can_be_moved(board, box_position):
@@ -209,6 +201,7 @@ def is_box_can_be_moved(board, box_position):
         left_move[1]] == '@') and board[right_move[0]][right_move[1]] != '#' and '$' not in board[right_move[0]][
         right_move[1]]:
         return True
+
     if (board[right_move[0]][right_move[1]] == ' ' or '%' in board[right_move[0]][right_move[1]] or
         board[right_move[0]][right_move[1]] == '@') and board[left_move[0]][left_move[1]] != '#' and \
             '$' not in board[left_move[0]][left_move[1]]:
@@ -223,21 +216,21 @@ def is_box_can_be_moved(board, box_position):
     return False
 
 
-''' CHECK WHEHTER ALL BOXES ARE STUCK '''
+''' kiểm tra tất cả các box bị kẹt '''
 
 
 def is_all_boxes_stuck(board, list_check_point):
     box_positions = find_boxes_position(board)
     result = True
     for box_position in box_positions:
-        if is_box_on_check_point(box_position, list_check_point):
+        if is_box_on_check_point(box_position, list_check_point, board):
             return False
         if is_box_can_be_moved(board, box_position):
             result = False
     return result
 
 
-''' CHECK WHETHER AT LEAST ONE BOX IS STUCK IN THE CORNER'''
+''' kiểm tra ít nhất 1 box nằm trong góc'''
 
 
 def is_board_can_not_win(board, list_check_point):
@@ -250,7 +243,7 @@ def is_board_can_not_win(board, list_check_point):
     return False
 
 
-''' GET THE NEXT POSSIBLE MOVE '''
+''' Lấy tất cả vị trí có thể di chuyển '''
 
 
 # Check if available < max - 1 then return false
@@ -271,14 +264,15 @@ def is_can_append_box(x, y, checkpoint1):
 
 
 # Kiem tra xem checkpoint da co hop hay chua, neu chua co the di, neu co phai cung loai moi duoc di
-def is_can_push_box_to_checkpoint(box, x, y, list_checkpoint, list_checkpoint_original,broad):
+def is_can_push_box_to_checkpoint(box, x, y, list_checkpoint, list_checkpoint_original, broad):
     for i in range(len(list_checkpoint)):
-        # Kiem tra co phai la vi tri checkpoint
-        if list_checkpoint[i][0] == x and list_checkpoint[i][1] == y:
+        # Kiem tra co phai la vi tri checkpoint va con cho trong hay khong
+        if list_checkpoint[i][0] == x and list_checkpoint[i][1] == y and list_checkpoint[i][2]:
             # Kiem tra cung loai hay khong
             if box != '$' + str(list_checkpoint[i][3]):
                 # Kiem tra xem vi tri checkpoint da co hop hay chua
                 if list_checkpoint[i][2] == list_checkpoint_original[i][2]:
+                    # print(list_checkpoint[i][2], " + ",list_checkpoint_original[i][2] )
                     return True
             else:
                 # Dieu kien cung loai, neu khong co hop hoac co hop cung loai trong checkpoint thi co the di
@@ -303,13 +297,13 @@ def get_next_pos(board, cur_pos, list_checkpoint, list_checkpoint_original):
                     if next_pos_box == ' ':
                         list_can_move.append((x - 1, y))
                     elif '%' in next_pos_box:
-                        if is_can_push_box_to_checkpoint(value, x - 2, y, list_checkpoint, list_checkpoint_original,board):
+                        if is_can_push_box_to_checkpoint(value, x - 2, y, list_checkpoint, list_checkpoint_original,
+                                                         board):
                             list_can_move.append((x - 1, y))
                     elif '$' in next_pos_box:
-                        if is_can_append_box(x - 2, y, list_checkpoint):
-                            if is_can_push_box_to_checkpoint(value, x - 2, y, list_checkpoint,
-                                                             list_checkpoint_original,board):
-                                list_can_move.append((x - 1, y))
+                        if is_can_push_box_to_checkpoint(value, x - 2, y, list_checkpoint, list_checkpoint_original,
+                                                         board):
+                            list_can_move.append((x - 1, y))
 
     # MOVE DOWN (x + 1, y)
     if 0 <= x + 1 < len(board):
@@ -323,13 +317,13 @@ def get_next_pos(board, cur_pos, list_checkpoint, list_checkpoint_original):
                     if next_pos_box == ' ':
                         list_can_move.append((x + 1, y))
                     elif '%' in next_pos_box:
-                        if is_can_push_box_to_checkpoint(value, x + 2, y, list_checkpoint, list_checkpoint_original,board):
+                        if is_can_push_box_to_checkpoint(value, x + 2, y, list_checkpoint, list_checkpoint_original,
+                                                         board):
                             list_can_move.append((x + 1, y))
                     elif '$' in next_pos_box:
-                        if is_can_append_box(x + 2, y, list_checkpoint):
-                            if is_can_push_box_to_checkpoint(value, x + 2, y, list_checkpoint,
-                                                             list_checkpoint_original,board):
-                                list_can_move.append((x + 1, y))
+                        if is_can_push_box_to_checkpoint(value, x + 2, y, list_checkpoint, list_checkpoint_original,
+                                                         board):
+                            list_can_move.append((x + 1, y))
 
     # MOVE LEFT (x, y - 1)
     if 0 <= y - 1 < len(board[0]):
@@ -343,13 +337,13 @@ def get_next_pos(board, cur_pos, list_checkpoint, list_checkpoint_original):
                     if next_pos_box == ' ':
                         list_can_move.append((x, y - 1))
                     elif '%' in next_pos_box:
-                        if is_can_push_box_to_checkpoint(value, x, y - 2, list_checkpoint, list_checkpoint_original,board):
+                        if is_can_push_box_to_checkpoint(value, x, y - 2, list_checkpoint, list_checkpoint_original,
+                                                         board):
                             list_can_move.append((x, y - 1))
                     elif '$' in next_pos_box:
-                        if is_can_append_box(x, y - 2, list_checkpoint):
-                            if is_can_push_box_to_checkpoint(value, x, y - 2, list_checkpoint,
-                                                             list_checkpoint_original,board):
-                                list_can_move.append((x, y - 1))
+                        if is_can_push_box_to_checkpoint(value, x, y - 2, list_checkpoint, list_checkpoint_original,
+                                                         board):
+                            list_can_move.append((x, y - 1))
 
     # MOVE RIGHT (x, y + 1)
     if 0 <= y + 1 < len(board[0]):
@@ -363,24 +357,24 @@ def get_next_pos(board, cur_pos, list_checkpoint, list_checkpoint_original):
                     if next_pos_box == ' ':
                         list_can_move.append((x, y + 1))
                     elif '%' in next_pos_box:
-                        if is_can_push_box_to_checkpoint(value, x, y + 2, list_checkpoint, list_checkpoint_original,board):
+                        if is_can_push_box_to_checkpoint(value, x, y + 2, list_checkpoint, list_checkpoint_original,
+                                                         board):
                             list_can_move.append((x, y + 1))
                     elif '$' in next_pos_box:
-                        if is_can_append_box(x, y + 2, list_checkpoint):
-                            if is_can_push_box_to_checkpoint(value, x, y + 2, list_checkpoint,
-                                                             list_checkpoint_original,board):
-                                list_can_move.append((x, y + 1))
+                        if is_can_push_box_to_checkpoint(value, x, y + 2, list_checkpoint, list_checkpoint_original,
+                                                         board):
+                            list_can_move.append((x, y + 1))
 
     return list_can_move
 
 
-''' MOVE THE BOARD IN CERTAIN DIRECTIONS '''
+''' Di chuyển box theo next_pos '''
 
 
 def move(board, next_pos, cur_pos, list_check_point):
     '''return a new board after move'''
     # MAKE NEW BOARD AS SAME AS CURRENT BOARD
-    new_board = assign_matrix(board)
+    new_board = deepcopy(board)
     # FIND NEXT POSITION IF MOVE TO BOX
 
     if '$' in new_board[next_pos[0]][next_pos[1]]:
@@ -402,6 +396,14 @@ def move(board, next_pos, cur_pos, list_check_point):
         if new_board[p[0]][p[1]] == ' ':
             new_board[p[0]][p[1]] = '%' + str(p[3])
     return new_board, list_check_point
+
+
+def check_checkpoint_init(board, list_checkpoint):
+    new_list_checkpoint = deepcopy(list_checkpoint)
+    for check_point in new_list_checkpoint:
+        if '$' in board[check_point[0]][check_point[1]]:
+            check_point[2] -= 1
+    return new_list_checkpoint
 
 # ''' FIND ALL CHECKPOINTS ON THE BOARD '''
 # def find_list_check_point(board):

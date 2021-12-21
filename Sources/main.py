@@ -1,12 +1,10 @@
 import numpy as np
 import os
-from colorama import Fore
-from colorama import Style
-from copy import deepcopy
 import pygame
-from pygame.constants import KEYDOWN
+
 import bfs
 import astar
+import dfs
 
 ''' TIME OUT FOR ALL ALGORITHM : 30 MIN ~ 1800 SECONDS '''
 TIME_OUT = 1800
@@ -60,6 +58,8 @@ def format_row(row):
             row[i] = '$1'
         elif row[i] == 'b2':
             row[i] = '$2'
+        elif row[i] == 'b3':
+            row[i] = '$3'
         elif row[i] == 'c':
             row[i] = '%'
         elif row[i] == '.':
@@ -95,29 +95,24 @@ def get_pair(path):
 
 
 '''
-//========================//
-//      DECLARE AND       //
-//  INITIALIZE MAPS AND   //
-//      CHECK POINTS      //
-//========================//
+KHỞI TẠO MAP VÀ CÁC CHECKPOINT
 '''
 
 
+# THAY ĐỔI KÝ HIỆU CHECKPOINT THEO LOẠI
 def change_maps_by_checkpoints(maps, check_points):
     for i in range(len(maps)):
         for check_point in check_points[i]:
-            maps[i][check_point[0]][check_point[1]] = '%' + str(check_point[3])
+            if maps[i][check_point[0]][check_point[1]] == ' ':
+                maps[i][check_point[0]][check_point[1]] = '%' + str(check_point[3])
     return maps
 
 
 check_points = get_check_points()
 maps = change_maps_by_checkpoints(get_boards(), check_points)
+
 '''
-//========================//
-//         PYGAME         //
-//     INITIALIZATIONS    //
-//                        //
-//========================//
+    KHỞI TẠO PYGAME
 '''
 pygame.init()
 pygame.font.init()
@@ -139,15 +134,17 @@ player = pygame.image.load(os.getcwd() + '\\player.png')
 player = pygame.transform.scale(player, (50, 50))
 wall = pygame.image.load(os.getcwd() + '\\wall.png')
 wall = pygame.transform.scale(wall, (50, 50))
-# wall = pygame.transform.scale(wall, (60, 60))
-
 box1 = pygame.image.load(os.getcwd() + '\\box1.png')
 box1 = pygame.transform.scale(box1, (50, 50))
+
 box2 = pygame.image.load(os.getcwd() + '\\box2.png')
 box2 = pygame.transform.scale(box2, (50, 50))
+
+box3 = pygame.image.load(os.getcwd() + '\\box3.png')
+box3 = pygame.transform.scale(box3, (50, 50))
+
 point = pygame.image.load(os.getcwd() + '\\goal.png')
 point = pygame.transform.scale(point, (50, 50))
-# point1 = pygame.transform.scale(point1, (35, 35))
 
 space = pygame.image.load(os.getcwd() + '\\space.png')
 space = pygame.transform.scale(space, (50, 50))
@@ -157,7 +154,7 @@ arrow_right = pygame.image.load(os.getcwd() + '\\arrow_right.png')
 arrow_up = pygame.image.load(os.getcwd() + '\\arrow_up.png')
 
 '''
-RENDER THE MAP FOR GAMEPLAY
+RENDER THE MAP
 '''
 
 
@@ -185,53 +182,48 @@ def renderMap(board, check_point, current_state=None, count_state=None, time=Non
             screen.blit(space, (j * 50 + indent, i * 50 + 150))
             if board[i][j] == '#':
                 screen.blit(wall, (j * 50 + indent, i * 50 + 150))
+            if '%' in board[i][j]:
+                screen.blit(point, (j * 50 + indent, i * 50 + 150))
             if board[i][j] == '$1':
                 screen.blit(box1, (j * 50 + indent, i * 50 + 150))
             if board[i][j] == '$2':
                 screen.blit(box2, (j * 50 + indent, i * 50 + 150))
-            if '%' in board[i][j]:
-                screen.blit(point, (j * 50 + indent, i * 50 + 150))
+            if board[i][j] == '$3':
+                screen.blit(box3, (j * 50 + indent, i * 50 + 150))
             if board[i][j] == '@':
                 screen.blit(player, (j * 50 + indent, i * 50 + 150))
-        # if board[i][j].isnumeric():
-        # 	screen.blit(point, (j * 32 + indent, i * 32 + 250))
-        # 	titleSize = pygame.font.SysFont('Open Sans', 20, bold=100)
-        # 	titleText = titleSize.render(board[i][j], True, RED)
-        # 	screen.blit(titleText, (j * 32 + indent+5,i * 32 + 250))
+    # HIỂN THỊ SỐ LƯỢNG CÒN TRỐNG TRONG CHECKPOINT THEO LOẠI
     for i in check_point:
         titleSize = pygame.font.SysFont('Open Sans', 40, bold=True)
         if i[3] == 1:
             titleText = titleSize.render(f"{i[2]}", True, YELLOW)
-        else:
+        elif i[3] == 2:
             titleText = titleSize.render(f"{i[2]}", True, GREEN)
+        elif i[3] == 3:
+            titleText = titleSize.render(f"{i[2]}", True, RED)
         screen.blit(titleText, (i[1] * 50 + indent + 10, i[0] * 50 + 145))
 
 
 '''
-VARIABLES INITIALIZATIONS
+KHỞI TẠO MỘT SỐ BIẾN
 '''
 # Map level
 mapNumber = 0
-# Algorithm to solve the game
+# Algorithm
 algorithm = "Breadth First Search"
-# Your scene states, including:
-# init for choosing your map and algorithm
-# loading for displaying "loading scene"
-# executing for solving problem
-# playing for displaying the game
+list_algorithm = ["Breadth First Search", "A Star Search", "Depth First Search"]
 sceneState = "init"
-loading = False
-
+index_algorithm = 0
 ''' SOKOBAN FUNCTION '''
 
 
 def sokoban():
     running = True
     global sceneState
-    global loading
     global algorithm
     global list_board
     global mapNumber
+    global index_algorithm
     stateLenght = 0
     currentState = 0
     found = True
@@ -248,14 +240,19 @@ def sokoban():
             count_step = 0
             # Choose map
             list_check_point = check_points[mapNumber]
-            # Choose between BFS or Hill Climbing
+            # Choose between BFS or A*
             if algorithm == "Breadth First Search":
                 print("BFS")
                 list_board = bfs.BFS_search(maps[mapNumber], list_check_point)
-
-            else:
+            elif algorithm == "Depth First Search":
+                print("DFS")
+                list_board = dfs.DFS_search(maps[mapNumber], list_check_point)
+            elif algorithm == "A Star Search":
                 print("AStar")
                 list_board = astar.AStart_Search(maps[mapNumber], list_check_point)
+
+
+
 
             if len(list_board) > 0:
                 sceneState = "playing"
@@ -277,8 +274,7 @@ def sokoban():
                 notfoundGame()
 
         if sceneState == "playing":
-            list_check_point = check_points[mapNumber]
-            clock.tick(2)
+            clock.tick(3)
             renderMap(list_board[0][currentState], list_board[0][currentState + 1], count_step, countState, time)
             count_step += 1
             currentState = currentState + 2
@@ -307,10 +303,11 @@ def sokoban():
                         sceneState = "init"
                 # Press SPACE key board to switch algorithm
                 if event.key == pygame.K_UP and sceneState == "init":
-                    if algorithm == "Breadth First Search":
-                        algorithm = "A Star Search"
-                    else:
-                        algorithm = "Breadth First Search"
+                    index_algorithm += 1
+                    if index_algorithm > 2:
+                        index_algorithm = 0
+                    algorithm = list_algorithm[index_algorithm]
+
         pygame.display.flip()
     pygame.quit()
 
@@ -318,7 +315,7 @@ def sokoban():
 ''' DISPLAY MAIN SCENE '''
 
 
-# DISPLAY INITIAL SCENE
+# HIỂN THỊ MÀN HÌNH CHỌN MAP VÀ LEVEL
 def initGame(map):
     titleSize = pygame.font.SysFont('Open Sans', 60, bold=True)
     titleText = titleSize.render('Improved Sokoban', True, WHITE)
@@ -341,10 +338,9 @@ def initGame(map):
     renderMap(map, check_points[mapNumber])
 
 
-''' LOADING SCENE '''
+''' LOADING '''
 
 
-# DISPLAY LOADING SCENE
 def loadingGame():
     fontLoading_1 = pygame.font.SysFont('Open Sans', 40, bold=True)
     text_1 = fontLoading_1.render('LOADINGGG!', True, WHITE)
@@ -355,6 +351,9 @@ def loadingGame():
     text_2 = fontLoading_2.render('...', True, WHITE)
     text_rect_2 = text_2.get_rect(center=(380, 230))
     screen.blit(text_2, text_rect_2)
+
+
+''' GIẢI THÀNH CÔNG'''
 
 
 def foundGame(map, stateLength, currentState, countState, time):
@@ -371,6 +370,9 @@ def foundGame(map, stateLength, currentState, countState, time):
     screen.blit(text_2, text_rect_2)
 
     renderMap(map, stateLength, currentState - 1, countState, time)
+
+
+''' KHÔNG TÌM THẤY KẾT QUẢ'''
 
 
 def notfoundGame():

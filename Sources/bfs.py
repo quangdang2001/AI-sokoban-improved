@@ -3,63 +3,61 @@ import os
 import support_function as spf
 import time
 from copy import deepcopy
-'''
-//========================//
-//           BFS          //
-//        ALGORITHM       //
-//     IMPLEMENTATION     //
-//========================//
-'''
+
 def BFS_search(board, list_check_point):
     start_time = time.time()
-    ''' BFS SEARCH SOLUTION '''
-    ''' IF START BOARD IS GOAL OR DON'T HAVE CHECK POINT '''
+
+    ''' nếu board ban đầu là goal thì trả về '''
     if spf.check_win(board,list_check_point):
         print("Found win first")
         return [board]
-    ''' INITIALIZE START STATE '''
-    start_state = spf.state(board, None, list_check_point)
-    ''' INITIALIZE 2 LISTS USED FOR BFS SEARCH '''
-    list_state = [start_state]
-    list_visit = [start_state]
-    ''' LOOP THROUGH VISITED LIST '''
-    while len(list_visit) != 0:
-        ''' GET NOW STATE TO SEARCH '''
-        now_state = list_visit.pop(0)
+    ''' khởi tạo trạng thái ban đầu '''
+    start_state = spf.state(board, None, spf.check_checkpoint_init(board,list_check_point))
 
-        ''' GET THE PLAYER'S CURRENT POSITION '''
+    ''' khởi tạo 2 list cho thuật toán bfs'''
+    # visited_state danh sách các trạng thái đã đc xét
+    visited_state = [start_state]
+    # queue_state danh sách các trạng thái đang đợi để xét
+    queue_state = [start_state]
+
+    ''' lặp queue_state '''
+    while len(queue_state) != 0:
+        ''' lấy trạng thái đầu tiên trong hàng đợi '''
+        now_state = queue_state.pop(0)
+
+        ''' lấy vị trí hiện tại của player '''
         cur_pos = spf.find_position_player(now_state.board)
 
-        ''' GET LIST POSITION THAT PLAYER CAN MOVE TO '''
+        ''' lấy ra list các vị trí player có thể di chuyển '''
         list_can_move = spf.get_next_pos(now_state.board, cur_pos,now_state.check_points,list_check_point)
-        ''' MAKE NEW STATES FROM LIST CAN MOVE '''
+        ''' tạo các trạng thái mới từ list_can_move '''
         for next_pos in list_can_move:
-            ''' MAKE NEW BOARD '''
+            ''' tạo board mới và checkpoint của nó '''
             new_board,new_checkpoint = spf.move(now_state.board, next_pos, cur_pos, deepcopy(now_state.check_points))
-            ''' IF THIS BOARD DON'T HAVE IN LIST BEFORE --> SKIP THE STATE '''
-            if spf.is_board_exist(new_board, list_state,new_checkpoint):
+            ''' nếu board đã tồn tại thì bỏ qua '''
+            if spf.is_board_exist(new_board, visited_state,new_checkpoint):
                 continue
-            ''' IF ONE OR MORE BOXES ARE STUCK IN THE CORNER --> SKIP THE STATE '''
+            ''' nếu có hộp nằm trong góc thì bỏ qua '''
             if spf.is_board_can_not_win(new_board, new_checkpoint):
                 continue
-            ''' IF ALL BOXES ARE STUCK --> SKIP THE STATE '''
+            ''' nếu tất cả các hộp bị kẹt thì bỏ qua '''
             if spf.is_all_boxes_stuck(new_board, new_checkpoint):
                 continue
 
-            ''' MAKE NEW STATE '''
+            ''' tạo một trạng thái mới '''
             new_state = spf.state(new_board, now_state, new_checkpoint)
-            ''' CHECK WHETHER THE NEW STATE IS GOAL OR NOT '''
+            ''' kiểm tra đã đạt goal '''
             if spf.check_win(new_board, new_checkpoint):
                 print("Found win")
                 end_time = time.time()
-                print(len(list_state))
-                return (new_state.get_line(), len(list_state),round(end_time - start_time,3))
+                print(len(visited_state))
+                return new_state.get_line(), len(visited_state), round(end_time - start_time, 3)
             
-            ''' APPEND NEW STATE TO VISITED LIST AND TRAVERSED LIST '''
-            list_state.append(new_state)
-            list_visit.append(new_state)
+            ''' thêm trạng thái mới vào 2 list '''
+            visited_state.append(new_state)
+            queue_state.append(new_state)
 
-            ''' COMPUTE THE TIMEOUT '''
+
             end_time = time.time()
             if end_time - start_time > spf.TIME_OUT:
                 return []
