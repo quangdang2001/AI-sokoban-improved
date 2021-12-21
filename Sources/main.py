@@ -103,14 +103,14 @@ KHỞI TẠO MAP VÀ CÁC CHECKPOINT
 def change_maps_by_checkpoints(maps, check_points):
     for i in range(len(maps)):
         for check_point in check_points[i]:
-            if maps[i][check_point[0]][check_point[1]] == ' ':
+            if maps[i][check_point[0]][check_point[1]] == '%':
                 maps[i][check_point[0]][check_point[1]] = '%' + str(check_point[3])
     return maps
 
 
 check_points = get_check_points()
 maps = change_maps_by_checkpoints(get_boards(), check_points)
-
+print(maps)
 '''
     KHỞI TẠO PYGAME
 '''
@@ -250,9 +250,6 @@ def sokoban():
             elif algorithm == "A Star Search":
                 print("AStar")
                 list_board = astar.AStart_Search(maps[mapNumber], list_check_point)
-
-
-
 
             if len(list_board) > 0:
                 sceneState = "playing"
