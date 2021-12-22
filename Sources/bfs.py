@@ -6,7 +6,7 @@ from copy import deepcopy
 
 def BFS_search(board, list_check_point):
     start_time = time.time()
-
+    print(board)
     ''' nếu board ban đầu là goal thì trả về '''
     if spf.check_win(board,list_check_point):
         print("Found win first")

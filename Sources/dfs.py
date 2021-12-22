@@ -1,3 +1,5 @@
+import numpy as np
+
 import support_function as spf
 import time
 from copy import deepcopy
@@ -42,7 +44,8 @@ def DFS_util(now_state, visited_state):
 
         end_time = time.time()
         if end_time - start_time > spf.TIME_OUT:
-            result = []
+            result = [],np.Inf,round(end_time - start_time, 3)
+            return
 
         DFS_util(new_state, visited_state)
 

@@ -110,7 +110,7 @@ def change_maps_by_checkpoints(maps, check_points):
 
 check_points = get_check_points()
 maps = change_maps_by_checkpoints(get_boards(), check_points)
-print(maps)
+
 '''
     KHỞI TẠO PYGAME
 '''
