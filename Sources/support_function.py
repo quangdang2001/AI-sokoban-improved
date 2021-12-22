@@ -5,6 +5,7 @@ from scipy.optimize import linear_sum_assignment
 
 TIME_OUT = 1800
 
+
 class state:
     def __init__(self, board, state_parent, list_check_point):
         '''storage current board and state parent of this state'''
@@ -23,6 +24,7 @@ class state:
         return (self.state_parent).get_line() + [self.board, self.check_points]
 
     ''' Hàm tính heuristic '''
+
     # Kiểm tra có cùng loại
     def is_similar_style(self, box, checkpoint_style):
         if box == '$' + str(checkpoint_style):
@@ -33,15 +35,21 @@ class state:
         list_boxes = find_boxes_position(self.board)
         if self.heuristic == 0:
             temp = []
+            count = 0
             for box in list_boxes:
                 for check_point in self.check_points:
                     if self.is_similar_style(self.board[box[0]][box[1]], check_point[3]):
-                        temp.append(abs(box[0] - check_point[0]) + abs(box[1] - check_point[1]))
+                        for i in range(min(check_point[2], len(list_boxes))):
+                            count += 1
+                            temp.append(abs(box[0] - check_point[0]) + abs(box[1] - check_point[1]))
                     else:
-                        temp.append(np.inf)
+                        for i in range(min(check_point[2], len(list_boxes))):
+                            count += 1
+                            temp.append(np.inf)
+
             # print(temp)
             arr = np.array(temp)
-            cost = arr.reshape(len(list_boxes), len(self.check_points))
+            cost = arr.reshape(len(list_boxes), int(count/len(list_boxes)))
 
             try:
                 row_ind, cow_ind = linear_sum_assignment(cost)
