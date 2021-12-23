@@ -263,12 +263,12 @@ def is_can_push_box(x, y, checkpoint1, checkpoint2):
     return True
 
 
-def is_can_append_box(x, y, checkpoint1):
-    for i in range(len(checkpoint1)):
-        if checkpoint1[i][0] == x and checkpoint1[i][1] == y:
-            if checkpoint1[i][2] > 0:
-                return True
-    return False
+# def is_can_append_box(x, y, checkpoint1):
+#     for i in range(len(checkpoint1)):
+#         if checkpoint1[i][0] == x and checkpoint1[i][1] == y:
+#             if checkpoint1[i][2] > 0:
+#                 return True
+#     return False
 
 
 # Kiem tra xem checkpoint da co hop hay chua, neu chua co the di, neu co phai cung loai moi duoc di
@@ -413,22 +413,3 @@ def check_checkpoint_init(board, list_checkpoint):
             check_point[2] -= 1
     return new_list_checkpoint
 
-# ''' FIND ALL CHECKPOINTS ON THE BOARD '''
-# def find_list_check_point(board):
-#     '''return list check point form the board
-#         if don't have any check point, return empty list
-#         it will check num of box, if num of box < num of check point
-#             return list [(-1,-1)]'''
-#     list_check_point = []
-#     num_of_box = 0
-#     ''' CHECK THE ENTIRE BOARD TO FIND CHECK POINT AND NUM OF BOX'''
-#     for x in range(len(board)):
-#         for y in range(len(board[0])):
-#             if board[x][y] in '$':
-#                 num_of_box += 1
-#             elif board[x][y] in '%':
-#                 list_check_point.append((x,y))
-#     ''' CHECK IF NUMBER OF BOX < NUM OF CHECK POINT'''
-#     if num_of_box < len(list_check_point):
-#         return [(-1,-1)]
-#     return list_check_point
